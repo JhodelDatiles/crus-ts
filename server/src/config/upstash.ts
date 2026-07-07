@@ -1,5 +1,8 @@
 import { Redis } from '@upstash/redis';
 import { Ratelimit } from '@upstash/ratelimit';
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // Initialize the Upstash Redis client
 export const redis = new Redis({
