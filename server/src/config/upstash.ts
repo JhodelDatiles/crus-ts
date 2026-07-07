@@ -1,6 +1,6 @@
 import { Redis } from '@upstash/redis';
 import { Ratelimit } from '@upstash/ratelimit';
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 
 dotenv.config();
 
