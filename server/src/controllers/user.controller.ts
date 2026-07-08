@@ -10,7 +10,7 @@ export const createUser = async (
   try {
     const { gmail, password } = req.body;
 
-    const userExist = await User.findOne({ $or: [{ gmail }, { password }] });
+    const userExist = await User.findOne({ gmail });
     if (userExist) {
       res.status(400).json({ success: false, message: "User already exist!" });
       return;
@@ -32,7 +32,7 @@ export const getAllUsers = async (
   try {
     const users = await User.find().select("-password");
 
-    res.status(200).json({ success: true, data: users});
+    res.status(200).json({ success: true, data: users });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -44,7 +44,7 @@ export const getUserById = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const user = await User.findById(req.params.id).select("-passsword");
+    const user = await User.findById(req.params.id).select("-password");
 
     if (!user) {
       res.status(404).json({ success: false, message: "User not found!" });
@@ -63,18 +63,18 @@ export const updateUser = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const updateUser = await User.findByIdAndUpdate(
+    const updatedUser = await User.findByIdAndUpdate(
       req.params.id,
       { $set: req.body },
       { new: true, runValidators: true }, // 'new' returns the modified document; 'runValidators' ensures schema rules apply
     ).select("-password");
 
-    if (!updateUser) {
+    if (!updatedUser) {
       res.status(404).json({ success: false, message: "User not found! " });
       return;
     }
 
-    res.status(200).json({ success: true, data: updateUser });
+    res.status(200).json({ success: true, data: updatedUser });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -86,9 +86,9 @@ export const deleteUser = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const deleteUser = await User.findByIdAndDelete(req.params.id);
+    const deletedUser = await User.findByIdAndDelete(req.params.id);
 
-    if (!deleteUser) {
+    if (!deletedUser) {
       res
         .status(404)
         .json({ success: false, message: "Failed to delete user!" });
