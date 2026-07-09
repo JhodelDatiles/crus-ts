@@ -3,57 +3,63 @@ import { userAPI } from "../services/user.api.ts";
 import toast from "react-hot-toast";
 import type { IUser } from "../interfaces/user.interfaces";
 import CreateUserModal from "../components/users/CreateUserModal";
+import UpdateUserModal from "../components/users/UpdateUserModal.tsx";
 
 const HomePage = () => {
   const [users, setUsers] = useState<IUser[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<IUser | null>(null);
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const res = await userAPI.getAllUsers();
+      if (res && res.data) {
+        setUsers(res.data);
+      }
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("An unexpected error occurred.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const getUsers = async () => {
-      try {
-        setLoading(true);
-
-        const res = await userAPI.getAllUsers();
-
-        if (!res) {
-          toast.error("Failed to fetch users data!");
-          return;
-        }
-
-        if (res.data) {
-          setUsers(res.data);
-        }
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          toast.error(error.message);
-        } else {
-          toast.error("An unexpected error occurred.");
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    getUsers();
+    fetchUsers();
   }, []);
 
   const handleCreateUser = async (user: IUser) => {
     try {
       await userAPI.createUser(user);
-
       toast.success("User created!");
-
-      // Refresh the table
-      const res = await userAPI.getAllUsers();
-
-      if (res.data) {
-        setUsers(res.data);
-      }
+      fetchUsers();
     } catch (error) {
       if (error instanceof Error) {
         toast.error(error.message);
       }
     }
+  };
+
+  const handleUpdateUser = async (id: string, updatedUser: Partial<IUser>) => {
+    try {
+      await userAPI.updateUser(id, updatedUser);
+      toast.success("User details updated!");
+      fetchUsers();
+      setSelectedUser(null);
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      }
+    }
+  };
+
+  const openUpdateModal = (user: IUser) => {
+    setSelectedUser(user);
+    (document.getElementById("update_user_modal") as HTMLDialogElement).showModal();
   };
 
   return (
@@ -68,7 +74,7 @@ const HomePage = () => {
           <CreateUserModal onCreate={handleCreateUser} />
         </div>
 
-        {/* Card */}
+        {/* Table Card */}
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
             {loading ? (
@@ -92,21 +98,21 @@ const HomePage = () => {
                       users.map((user, index) => (
                         <tr key={user._id}>
                           <td>{index + 1}</td>
-
                           <td>{user.gmail}</td>
-
                           <td>
                             {user.createdAt
                               ? new Date(user.createdAt).toLocaleDateString()
                               : "-"}
                           </td>
-
                           <td>
                             <div className="flex justify-center gap-2">
-                              <button className="btn btn-sm btn-warning">
-                                Update
+                              {/* FIXED: Single handler to set target user and show modal */}
+                              <button 
+                                className="btn btn-sm btn-warning"
+                                onClick={() => openUpdateModal(user)}
+                              >
+                                Edit
                               </button>
-
                               <button className="btn btn-sm btn-error">
                                 Delete
                               </button>
@@ -128,6 +134,9 @@ const HomePage = () => {
           </div>
         </div>
       </div>
+
+      {/* FIXED: Rendered out of the loop globally, passing state variables */}
+      <UpdateUserModal user={selectedUser} onUpdate={handleUpdateUser} />
     </div>
   );
 };
