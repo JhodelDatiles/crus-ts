@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { userAPI } from "../services/user.api.ts";
 import toast from "react-hot-toast";
 import type { IUser } from "../interfaces/user.interfaces";
+import CreateUserModal from "../components/users/CreateUserModal";
 
 const HomePage = () => {
   const [users, setUsers] = useState<IUser[]>([]);
@@ -36,28 +37,40 @@ const HomePage = () => {
     getUsers();
   }, []);
 
+  const handleCreateUser = async (user: IUser) => {
+    try {
+      await userAPI.createUser(user);
+
+      toast.success("User created!");
+
+      // Refresh the table
+      const res = await userAPI.getAllUsers();
+
+      if (res.data) {
+        setUsers(res.data);
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-base-200 p-8">
       <div className="mx-auto max-w-5xl">
-
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">User Management</h1>
-            <p className="text-base-content/70">
-              Total Users: {users.length}
-            </p>
+            <p className="text-base-content/70">Total Users: {users.length}</p>
           </div>
-
-          <button className="btn btn-primary">
-            + Create User
-          </button>
+          <CreateUserModal onCreate={handleCreateUser} />
         </div>
 
         {/* Card */}
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
-
             {loading ? (
               <div className="flex justify-center py-10">
                 <span className="loading loading-spinner loading-lg"></span>
@@ -65,7 +78,6 @@ const HomePage = () => {
             ) : (
               <div className="overflow-x-auto">
                 <table className="table table-zebra">
-
                   <thead>
                     <tr>
                       <th>#</th>
@@ -110,11 +122,9 @@ const HomePage = () => {
                       </tr>
                     )}
                   </tbody>
-
                 </table>
               </div>
             )}
-
           </div>
         </div>
       </div>
