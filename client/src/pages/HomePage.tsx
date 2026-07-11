@@ -4,11 +4,13 @@ import toast from "react-hot-toast";
 import type { IUser } from "../interfaces/user.interfaces";
 import CreateUserModal from "../components/users/CreateUserModal";
 import UpdateUserModal from "../components/users/UpdateUserModal.tsx";
+import DeleteUserModal from "../components/users/DeleteUserModal.tsx"; // Kept import
 
 const HomePage = () => {
   const [users, setUsers] = useState<IUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState<IUser | null>(null);
+  const [selectedDeleteUser, setSelectedDeleteUser] = useState<IUser | null>(null); // State dedicated to deletion
 
   const fetchUsers = async () => {
     try {
@@ -57,9 +59,32 @@ const HomePage = () => {
     }
   };
 
+  const handleDeleteUser = async (id: string) => {
+    try {
+      await userAPI.deleteUser(id); 
+      toast.success("User deleted successfully!");
+      fetchUsers();
+      setSelectedDeleteUser(null);
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      }
+    }
+  };
+
   const openUpdateModal = (user: IUser) => {
     setSelectedUser(user);
-    (document.getElementById("update_user_modal") as HTMLDialogElement).showModal();
+    (
+      document.getElementById("update_user_modal") as HTMLDialogElement
+    ).showModal();
+  };
+
+  // Added missing open script handler for deletion 
+  const openDeleteModal = (user: IUser) => {
+    setSelectedDeleteUser(user);
+    (
+      document.getElementById("delete_user_modal") as HTMLDialogElement
+    ).showModal();
   };
 
   return (
@@ -106,14 +131,18 @@ const HomePage = () => {
                           </td>
                           <td>
                             <div className="flex justify-center gap-2">
-                              {/* FIXED: Single handler to set target user and show modal */}
-                              <button 
+                              <button
                                 className="btn btn-sm btn-warning"
                                 onClick={() => openUpdateModal(user)}
                               >
                                 Edit
                               </button>
-                              <button className="btn btn-sm btn-error">
+
+                              {/* FIXED: Replaced nested modal with an action trigger button */}
+                              <button
+                                className="btn btn-sm btn-error"
+                                onClick={() => openDeleteModal(user)}
+                              >
                                 Delete
                               </button>
                             </div>
@@ -135,8 +164,9 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* FIXED: Rendered out of the loop globally, passing state variables */}
+      {/* GLOBAL MODALS: Placed safely outside loop context execution */}
       <UpdateUserModal user={selectedUser} onUpdate={handleUpdateUser} />
+      <DeleteUserModal user={selectedDeleteUser} onDelete={handleDeleteUser} />
     </div>
   );
 };

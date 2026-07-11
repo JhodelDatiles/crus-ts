@@ -31,7 +31,8 @@ export const rateLimitMiddleware = async (
     next();
   } catch (error: any) {
     // Fail-safe: If Redis goes down, you might still want to let traffic through
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Rate limiter error, failing open:", error.message);
+    // res.status(500).json({ success: false, message: error.message });
     next();
   }
 };
